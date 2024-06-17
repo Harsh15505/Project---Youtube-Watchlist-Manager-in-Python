@@ -1,11 +1,17 @@
 import csv
 import datetime as dt
+import requests
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
+api_key = os.getenv("Google_API_key")
 
 config_file_path = os.path.join(os.path.dirname(__file__), 'config.txt')
 watchlist_file_path = os.path.join(os.path.dirname(__file__), 'YoutubeWatchList.csv')
 
 def load_data():
+        
         content = []
       
 
@@ -30,12 +36,14 @@ def load_data():
         return days_limit,content
 
 def save_data(video):
+       
         with open(watchlist_file_path, 'w', newline='') as file:
             writer = csv.writer(file)
             for data in video:
                 writer.writerow([data['Title'], data['Duration'], data['Speed'], data['link'], data['time required'],data['Date added']])
         
 def list_videos(content,days_limit):
+    
     print('\n ** List of all videos in Your watchlist ** \n')
     print("*"*70)
     for index , video in enumerate(content, start = 1):
@@ -48,13 +56,28 @@ def list_videos(content,days_limit):
     print("\n")
     print("*"*70)
 
-def add_video(video):
+def fetch_youtube_data(url):
    
-    Title = input("Enter Title: ")
-    Duration = input("Enter Duration (in rounded mins): ")
-    Speed = input("Enter Speed: ")
+    video_id = url.split('v=')[-1]
+    data = requests.get(f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={api_key}&part=snippet,contentDetails")
+    youtube_details = data.json()
+    video_title = youtube_details['items'][0]['snippet']['title']
+    raw_duration = youtube_details['items'][0]['contentDetails']['duration'].split('PT')[-1].split('M')
+    video_min = raw_duration[0]
+    video_seconds = raw_duration[1][:int(len(raw_duration[1])-1)]
+    return [video_title,video_min,video_seconds]
+
+
+
+
+def add_video(video):
     link = input("Enter link: ")
-    video.append({'Title': Title , 'Duration': Duration, 'Speed': Speed, 'link': link, 'time required': round((float(Duration)/float(Speed)),2) , 'Date added': dt.datetime.now().strftime("%d/%m/%Y")})
+    video_details = fetch_youtube_data(link)
+    Title = video_details[0]
+    Duration = {'Min':video_details[1] , 'Sec':video_details[2]}
+    Speed = input("Enter Speed: ")
+
+    video.append({'Title': Title , 'Duration': Duration, 'Speed': Speed, 'link': link, 'time required': round((float(Duration[0])/float(Speed)),2) , 'Date added': dt.datetime.now().strftime("%d/%m/%Y")})
     
     save_data(video)
     
