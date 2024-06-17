@@ -4,6 +4,7 @@ import requests
 from dotenv import load_dotenv
 import os
 
+
 load_dotenv()
 api_key = os.getenv("Google_API_key")
 
@@ -37,11 +38,52 @@ def load_data():
 
 def save_data(video):
        
-        with open(watchlist_file_path, 'w', newline='') as file:
+        with open(watchlist_file_path, 'w', newline='',encoding='utf-8') as file:
             writer = csv.writer(file)
             for data in video:
                 writer.writerow([data['Title'], data['Duration'], data['Speed'], data['link'], data['time required'],data['Date added']])
         
+def fetch_youtube_data(url):
+   
+    video_id = url.split('v=')[-1]
+    data = requests.get(f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={api_key}&part=snippet,contentDetails")
+    youtube_details = data.json()
+    video_title = youtube_details['items'][0]['snippet']['title']
+    
+    raw_duration_hours = youtube_details['items'][0]['contentDetails']['duration'].split('PT')[-1].split('H')
+
+    if len(raw_duration_hours) == 2:    
+        raw_duration = raw_duration_hours[1].split('M')
+        video_hours=raw_duration_hours[0]
+        
+        if len(raw_duration) == 2:    
+            video_min = raw_duration[0]
+            video_seconds = raw_duration[1][:int(len(raw_duration[1])-1)]
+        
+        elif len(raw_duration) == 1:
+            video_min = 0
+            video_seconds = raw_duration[0][:int(len(raw_duration[0])-1)]
+        
+    elif len(raw_duration_hours) == 1:    
+        raw_duration = raw_duration_hours[0].split('M')
+        video_hours=0
+        
+        if len(raw_duration) == 2:    
+            video_min = raw_duration[0]
+            video_seconds = raw_duration[1][:int(len(raw_duration[1])-1)]
+        
+        elif len(raw_duration) == 1:
+            video_min = 0
+            video_seconds = raw_duration[0][:int(len(raw_duration[0])-1)]
+            
+    return [video_title,video_min,video_seconds,video_hours]
+
+
+def convert_time_format(n):
+    n = int(n)
+    return str(dt.timedelta(seconds = n))
+     
+
 def list_videos(content,days_limit):
     
     print('\n ** List of all videos in Your watchlist ** \n')
@@ -51,33 +93,21 @@ def list_videos(content,days_limit):
         if Days_Ago > days_limit:
             remove_video(content,index)
             continue
-        print(f"\n{index}. Title : {video['Title']} , Total Duration : {video['Duration']} mins , Speed : {video['Speed']}x , URL : {video['link']} , Time required to watch : {video['time required']} mins , Video added {Days_Ago} days ago. \n")
+        print(f"\n{index}. Title : {video['Title']} , Total Duration : {convert_time_format(video['Duration'])} , Speed : {video['Speed']}x , URL : {video['link']} , Time required to watch : {convert_time_format(video['time required'])} , Video added {Days_Ago} days ago. \n")
         
     print("\n")
     print("*"*70)
-
-def fetch_youtube_data(url):
-   
-    video_id = url.split('v=')[-1]
-    data = requests.get(f"https://www.googleapis.com/youtube/v3/videos?id={video_id}&key={api_key}&part=snippet,contentDetails")
-    youtube_details = data.json()
-    video_title = youtube_details['items'][0]['snippet']['title']
-    raw_duration = youtube_details['items'][0]['contentDetails']['duration'].split('PT')[-1].split('M')
-    video_min = raw_duration[0]
-    video_seconds = raw_duration[1][:int(len(raw_duration[1])-1)]
-    return [video_title,video_min,video_seconds]
-
-
 
 
 def add_video(video):
     link = input("Enter link: ")
     video_details = fetch_youtube_data(link)
     Title = video_details[0]
-    Duration = {'Min':video_details[1] , 'Sec':video_details[2]}
+    Duration = (int(video_details[3]) * 3600) + (int(video_details[1]) * 60) + int(video_details[2])
     Speed = input("Enter Speed: ")
 
-    video.append({'Title': Title , 'Duration': Duration, 'Speed': Speed, 'link': link, 'time required': round((float(Duration[0])/float(Speed)),2) , 'Date added': dt.datetime.now().strftime("%d/%m/%Y")})
+
+    video.append({'Title': Title , 'Duration': Duration, 'Speed': Speed, 'link': link, 'time required': int(Duration/float(Speed)) , 'Date added': dt.datetime.now().strftime("%d/%m/%Y")})
     
     save_data(video)
     
@@ -90,11 +120,12 @@ def remove_video(content,index):
     else :
         print("Invalid index.")
 
+
 def total_time_counter(content):
     total_time = 0
     for video in content:
         total_time += float(video['time required'])
-    print("Total time required to watch all videos with desired speed is : ",total_time)
+    print("Total time required to watch all videos with desired speed is : ",convert_time_format(total_time))
 
 def Change_Config(days_limit):
     with open(config_file_path, 'w') as file:
