@@ -1,12 +1,16 @@
 import csv
 import datetime as dt
+import os
+
+config_file_path = os.path.join(os.path.dirname(__file__), 'config.txt')
+watchlist_file_path = os.path.join(os.path.dirname(__file__), 'YoutubeWatchList.csv')
 
 def load_data():
         content = []
       
 
         try :
-            with open('conifig.txt', 'r') as config_file:
+            with open(config_file_path, 'r') as config_file:
                 days_limit = int(config_file.read().strip())   
                 
         except FileNotFoundError:
@@ -14,7 +18,7 @@ def load_data():
             
         
         try :
-            with open('YoutubeWatchList.csv', 'r') as file:
+            with open(watchlist_file_path, 'r') as file:
                 reader = csv.reader(file)      
                 for row in reader:
                     video = {'Title': row[0] , 'Duration': row[1], 'Speed': row[2], 'link': row[3], 'time required': row[4],'Date added': row[5]}
@@ -26,7 +30,7 @@ def load_data():
         return days_limit,content
 
 def save_data(video):
-        with open('YoutubeWatchList.csv', 'w', newline='') as file:
+        with open(watchlist_file_path, 'w', newline='') as file:
             writer = csv.writer(file)
             for data in video:
                 writer.writerow([data['Title'], data['Duration'], data['Speed'], data['link'], data['time required'],data['Date added']])
@@ -70,7 +74,7 @@ def total_time_counter(content):
     print("Total time required to watch all videos with desired speed is : ",total_time)
 
 def Change_Config(days_limit):
-    with open('conifig.txt', 'w') as file:
+    with open(config_file_path, 'w') as file:
         file.write(str(days_limit))
 
 
