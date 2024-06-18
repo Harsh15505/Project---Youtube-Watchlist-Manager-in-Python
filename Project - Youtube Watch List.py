@@ -100,6 +100,7 @@ def list_videos(content,days_limit):
 
 
 def add_video(video):
+    
     link = input("Enter link: ")
     video_details = fetch_youtube_data(link)
     Title = video_details[0]
