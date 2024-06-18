@@ -22,7 +22,7 @@ Drowning in YouTube's "Watch Later" list? Tame the queue with this manager—add
 1. **Clone the repository**:
 
     ```bash
-    git clone https://github.com/yourusername/youtube-watchlist-manager.git
+    git clone https://github.com/Harsh15505/Project---Youtube-Watchlist-Manager-in-Python
     cd youtube-watchlist-manager
     ```
 
