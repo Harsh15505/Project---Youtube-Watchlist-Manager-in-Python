@@ -52,7 +52,7 @@ Drowning in YouTube's "Watch Later" list? Tame the queue with this manager—add
 1. **Run the script**:
 
     ```bash
-    python youtube_watchlist_manager.py
+    python '.\Project - Youtube Watch List.py'
     ```
 
 2. **Follow the on-screen instructions** to manage your YouTube watchlist:
